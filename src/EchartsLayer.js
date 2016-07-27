@@ -8,6 +8,13 @@ define([
     _ec: null,
     _geoCoord: [],
     _option: null,
+    _onZoom: null,
+    _onZoomEnd: null,
+    _onPan: null,
+    _onPanEnd: null,
+    _onDrag: null,
+    _onDragEnd: null,
+    _onMousewheel: null,
     _mapOffset: [0, 0],
     constructor: function(map, ec) {
       this._map = map;
@@ -219,31 +226,55 @@ define([
        * @private
        */
       self._bindEvent = function() {
-        self._map.on('zoom-end', function(e) {
-          self.setOption(self._option);
+        self._onZoomEnd = self._map.on('zoom-end', function(e) {
+          if(self._option){
+            self.setOption(self._option);
+          }
         });
-        self._map.on('zoom-start', function(e) {
+        self._onZoom = self._map.on('zoom-start', function(e) {
           self._ec.clear();
         });
-        self._map.on('pan', function(e) {
+        self._onPan = self._map.on('pan', function(e) {
           self._ec.clear();
         });
-        self._map.on('pan-end', function(e) {
-          self.setOption(self._option);
+        self._onPanEnd = self._map.on('pan-end', function(e) {
+          if(self._option){
+            self.setOption(self._option);
+          }
         });
 
-        self._ec.getZrender().on('dragstart', function(e) {
-          self._map.disablePan();
-          //self._ec.clear();
+        self._onDrag = self._ec.getZrender().on('dragstart', function(e) {
+          //self._map.disablePan();
+          self._ec.clear();
         });
-        self._ec.getZrender().on('dragend', function(e) {
-          self._map.enablePan();
-          //self.setOption(self._option);
+        self._onDragEnd = self._ec.getZrender().on('dragend', function(e) {
+          //self._map.enablePan();
+          self.setOption(self._option);
         });
-        self._ec.getZrender().on('mousewheel', function(e) {
+        self._onMousewheel = self._ec.getZrender().on('mousewheel', function(e) {
           self._ec.clear();
           self._map.emit('mouse-wheel', e.event)
         });
+      };
+
+      /**
+       * 清除地图上的绘画
+       *
+       * @public
+       */
+      self.clear = function(){
+        self._ec.clear();
+      };
+      /**
+       * 地图widgets关闭
+       *
+       * @public
+       */
+      self.shutdown = function(){
+        self._onZoomEnd.remove();
+        self._onZoom.remove();
+        self._onPan.remove();
+        self._onPanEnd.remove();
       };
 
     }
